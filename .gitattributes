@@ -1,0 +1,92 @@
+# Normalize text files to LF by default. Override only where a platform format is
+# required for execution.
+* text=auto eol=lf
+
+# Shell and platform scripts
+*.sh text eol=lf
+*.bash text eol=lf
+*.zsh text eol=lf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# .NET source
+*.cs text diff=csharp
+*.csx text diff=csharp
+*.razor text linguist-language=HTML+Razor
+*.cshtml text linguist-language=HTML+Razor
+*.razor.css text linguist-language=CSS
+*.razor.js text linguist-language=JavaScript
+
+# Web source
+*.css text
+*.html text
+*.js text
+*.map text linguist-generated
+*.svg text
+
+# Build/config
+*.config text
+*.csproj text
+*.editorconfig text
+*.gitignore text
+*.gitattributes text
+*.json text
+*.jsonc text
+*.lock text
+*.props text
+*.resx text
+*.ruleset text
+*.sln text
+*.slnx text
+*.targets text
+*.toml text
+*.xml text
+*.yaml text
+*.yml text
+
+# Docs/data
+*.csv text
+*.md text diff=markdown
+*.sql text
+*.txt text
+
+# Generated source that should not skew GitHub language stats.
+src/Launchpad.Web/Data/Migrations/*.Designer.cs linguist-generated
+src/Launchpad.Web/Data/Migrations/*ModelSnapshot.cs linguist-generated
+
+# Checked-in third-party browser assets.
+src/Launchpad.Web/wwwroot/lib/** linguist-vendored
+
+# Binary assets/artifacts
+*.7z binary
+*.avif binary
+*.db binary
+*.db-shm binary
+*.db-wal binary
+*.dll binary
+*.exe binary
+*.gif binary
+*.gz binary
+*.ico binary
+*.jpeg binary
+*.jpg binary
+*.mp3 binary
+*.mp4 binary
+*.nupkg binary
+*.otf binary
+*.pdf binary
+*.pdb binary
+*.png binary
+*.snupkg binary
+*.sqlite binary
+*.sqlite3 binary
+*.tar binary
+*.tgz binary
+*.ttf binary
+*.wasm binary
+*.webp binary
+*.woff binary
+*.woff2 binary
+*.xz binary
+*.zip binary
