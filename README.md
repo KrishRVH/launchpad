@@ -9,6 +9,7 @@ It shows the boring modern .NET stack in one local app:
 - ASP.NET Core Identity with seeded roles and users
 - EF Core with PostgreSQL migrations
 - Aspire AppHost, ServiceDefaults, health checks, and OpenTelemetry
+- Aspire Postgres MCP tools for agent-assisted database inspection
 - first-party hosted workers with persisted release-check rows
 - Minimal API integration endpoints protected by an API-key auth scheme
 - mise-driven restore, format, build, test, and run tasks
@@ -75,7 +76,17 @@ mise run dev
 Optional Playwright smoke tests require a running app:
 
 ```sh
-LAUNCHPAD_E2E_URL=https://localhost:PORT mise run csharp:test:e2e
+LAUNCHPAD_E2E_URL=http://localhost:5195 mise run csharp:test:e2e
+```
+
+## Aspire Agent Tools
+
+The AppHost exposes the `launchpaddb` PostgreSQL database through Aspire's
+Postgres MCP server while the app is running.
+
+```sh
+dotnet tool run aspire -- mcp tools
+dotnet tool run aspire -- mcp call launchpaddb-mcp execute_sql --input '{"sql":"SELECT 1 AS value;"}'
 ```
 
 ## Integration API
