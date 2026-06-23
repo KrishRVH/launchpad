@@ -1,0 +1,59 @@
+[settings]
+lockfile = true
+
+[env]
+DOTNET_CLI_TELEMETRY_OPTOUT = "1"
+DOTNET_NOLOGO = "1"
+
+[tasks.install]
+description = "Install pinned project tools and restore dependencies"
+run = """
+mise install
+dotnet tool restore
+mise run csharp:restore
+"""
+
+[tasks.lock]
+description = "Refresh mise.lock after tool-version changes"
+run = "mise lock"
+
+[tasks.doctor]
+description = "Inspect mise configuration and installed tools"
+run = "mise doctor"
+
+[tasks.tasks]
+description = "List available project tasks"
+run = "mise tasks"
+
+[tasks.fmt]
+description = "Format the project"
+depends = ["csharp:fmt"]
+
+[tasks."fmt:check"]
+description = "Check formatting"
+depends = ["csharp:fmt:check"]
+
+[tasks.lint]
+description = "Build with analyzers"
+depends = ["csharp:lint"]
+
+[tasks.test]
+description = "Run the normal test suite"
+depends = ["csharp:test"]
+
+[tasks.check]
+description = "Run the normal local gate"
+depends = ["csharp:check"]
+
+[tasks.ci]
+description = "Run the CI gate"
+depends = ["csharp:ci"]
+
+[tasks.dev]
+description = "Run the Aspire AppHost"
+depends = ["csharp:tools:restore"]
+run = "dotnet tool run aspire -- run --apphost src/Launchpad.AppHost/Launchpad.AppHost.csproj"
+
+[tasks.run]
+description = "Alias for dev"
+depends = ["dev"]

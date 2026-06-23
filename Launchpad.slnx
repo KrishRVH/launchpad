@@ -1,0 +1,11 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/Launchpad.AppHost/Launchpad.AppHost.csproj" />
+    <Project Path="src/Launchpad.ServiceDefaults/Launchpad.ServiceDefaults.csproj" />
+    <Project Path="src/Launchpad.Web/Launchpad.Web.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/Launchpad.PlaywrightTests/Launchpad.PlaywrightTests.csproj" />
+    <Project Path="tests/Launchpad.Tests/Launchpad.Tests.csproj" />
+  </Folder>
+</Solution>

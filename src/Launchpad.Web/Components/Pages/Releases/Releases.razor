@@ -1,0 +1,37 @@
+@page "/releases"
+@attribute [Authorize]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>Releases</PageTitle>
+
+<h1>Releases</h1>
+
+<section class="stack">
+    @foreach (var item in releases)
+    {
+        <FluentCard Class="launch-card">
+            <div class="split">
+                <div>
+                    <p class="eyebrow">@item.Project.Name</p>
+                    <h2>@item.Version</h2>
+                    <p>@item.Summary</p>
+                </div>
+                <span class="status-pill status-@item.Status.ToString().ToLowerInvariant()">@item.Status</span>
+            </div>
+        </FluentCard>
+    }
+</section>
+
+@code {
+    private List<GameRelease> releases = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        releases = await db.GameReleases
+            .AsNoTracking()
+            .Include(x => x.Project)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+    }
+}

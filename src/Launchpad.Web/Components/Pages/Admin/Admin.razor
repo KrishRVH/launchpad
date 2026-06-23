@@ -1,0 +1,52 @@
+@page "/admin"
+@attribute [Authorize(Policy = LaunchpadPolicies.ViewAdmin)]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject UserManager<ApplicationUser> UserManager
+
+<PageTitle>Admin</PageTitle>
+
+<h1>Admin</h1>
+
+<section class="two-column">
+    <FluentCard Class="launch-card">
+        <p class="eyebrow">Seeded users</p>
+        @foreach (var user in users)
+        {
+            <article class="compact-row">
+                <strong>@user.Email</strong>
+                <span>@user.DisplayName - @user.StudioTitle</span>
+            </article>
+        }
+    </FluentCard>
+
+    <FluentCard Class="launch-card">
+        <p class="eyebrow">Audit</p>
+        @foreach (var item in audit)
+        {
+            <article class="compact-row">
+                <strong>@item.Action</strong>
+                <span>@item.Detail</span>
+            </article>
+        }
+    </FluentCard>
+</section>
+
+@code {
+    private List<ApplicationUser> users = [];
+    private List<AuditEvent> audit = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        users = await UserManager.Users
+            .AsNoTracking()
+            .OrderBy(x => x.Email)
+            .ToListAsync();
+
+        await using var db = await DbFactory.CreateDbContextAsync();
+        audit = await db.AuditEvents
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(20)
+            .ToListAsync();
+    }
+}

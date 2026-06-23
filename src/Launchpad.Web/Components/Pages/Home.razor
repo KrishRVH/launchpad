@@ -1,0 +1,233 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@attribute [Authorize]
+@implements IDisposable
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+@inject ReleaseWorkflowService Workflow
+@inject LaunchpadNotifier Notifier
+@inject AuthenticationStateProvider AuthStateProvider
+@inject IAuthorizationService AuthorizationService
+
+<PageTitle>Launchpad War Room</PageTitle>
+
+@if (release is null)
+{
+    <p>Loading launch room...</p>
+}
+else
+{
+    <div class="hero-grid">
+        <FluentCard Class="launch-card launch-hero">
+            <p class="eyebrow">War Room</p>
+            <h1>@release.Project.Name @release.Version</h1>
+            <p>@release.Summary</p>
+            <div class="status-row">
+                <span class="status-pill status-@release.Status.ToString().ToLowerInvariant()">@release.Status</span>
+                <span>Target: @release.TargetDate.ToString("MMM d, yyyy")</span>
+                <span>@release.Gates.Count(g => g.Status == GateStatus.Passed) / @release.Gates.Count gates passed</span>
+            </div>
+            <div class="actions">
+                <FluentButton Appearance="Appearance.Accent" Disabled="@(!canRunChecks || busy)" @onclick="StartChecksAsync">Start release checks</FluentButton>
+                <FluentButton Appearance="Appearance.Outline" Disabled="@(!canApprove || busy)" @onclick="ApproveAsync">Approve launch</FluentButton>
+                <FluentButton Appearance="Appearance.Neutral" Disabled="@(!canManageRelease || busy)" @onclick="BlockAsync">Block release</FluentButton>
+            </div>
+            <label class="visually-hidden" for="block-reason">Block reason</label>
+            <input id="block-reason" class="reason-input" placeholder="Block reason" @bind="blockReason" @bind:event="oninput" />
+            @if (!string.IsNullOrWhiteSpace(message))
+            {
+                <p class="message">@message</p>
+            }
+        </FluentCard>
+
+        <FluentCard Class="launch-card">
+            <p class="eyebrow">Team notifications</p>
+            @foreach (var notification in notifications)
+            {
+                <article class="compact-row">
+                    <strong>@notification.Title</strong>
+                    <span>@notification.Body</span>
+                </article>
+            }
+        </FluentCard>
+    </div>
+
+    <section class="grid-3">
+        @foreach (var gate in release.Gates.OrderBy(g => g.SortOrder))
+        {
+            var lastRun = gate.CheckRuns.OrderByDescending(r => r.QueuedAt).FirstOrDefault();
+            <FluentCard Class="launch-card gate-card">
+                <div class="split">
+                    <div>
+                        <p class="eyebrow">@gate.Name gate</p>
+                        <h2>@gate.Status</h2>
+                    </div>
+                    <span class="status-pill status-@gate.Status.ToString().ToLowerInvariant()">@gate.Status</span>
+                </div>
+                <p>@gate.Description</p>
+                @if (lastRun is not null)
+                {
+                    <pre>@lastRun.Log</pre>
+                }
+            </FluentCard>
+        }
+    </section>
+
+    <section class="two-column">
+        <FluentCard Class="launch-card">
+            <p class="eyebrow">Open QA</p>
+            <h2>Bugs before launch</h2>
+            @foreach (var bug in release.Bugs.OrderByDescending(b => b.Severity))
+            {
+                <article class="compact-row">
+                    <strong>@bug.Title</strong>
+                    <span>@bug.Severity / @bug.Status</span>
+                </article>
+            }
+        </FluentCard>
+
+        <FluentCard Class="launch-card">
+            <p class="eyebrow">Audit trail</p>
+            <h2>Recent activity</h2>
+            @foreach (var audit in auditEvents)
+            {
+                <article class="compact-row">
+                    <strong>@audit.Action</strong>
+                    <span>@audit.Detail</span>
+                </article>
+            }
+        </FluentCard>
+    </section>
+}
+
+@code {
+    private GameRelease? release;
+    private List<TeamNotification> notifications = [];
+    private List<AuditEvent> auditEvents = [];
+    private string? message;
+    private string blockReason = "";
+    private bool busy;
+    private bool canRunChecks;
+    private bool canManageRelease;
+
+    private bool canApprove => canManageRelease && release is not null && ReleasePolicy.CanApprove(release);
+
+    protected override async Task OnInitializedAsync()
+    {
+        Notifier.Changed += OnLaunchpadChanged;
+        await LoadAuthorizationAsync();
+        await LoadAsync();
+    }
+
+    private async Task LoadAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        release = await db.GameReleases
+            .AsNoTracking()
+            .AsSplitQuery()
+            .Include(x => x.Project)
+            .Include(x => x.Gates)
+            .ThenInclude(x => x.CheckRuns)
+            .Include(x => x.Bugs)
+            .OrderBy(x => x.CreatedAt)
+            .FirstOrDefaultAsync();
+
+        notifications = await db.TeamNotifications
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(4)
+            .ToListAsync();
+
+        auditEvents = await db.AuditEvents
+            .AsNoTracking()
+            .OrderByDescending(x => x.CreatedAt)
+            .Take(8)
+            .ToListAsync();
+    }
+
+    private async Task StartChecksAsync()
+    {
+        if (!canRunChecks)
+        {
+            message = "You do not have permission to run release checks.";
+            return;
+        }
+
+        if (release is null)
+        {
+            return;
+        }
+
+        var userId = await CurrentUserIdAsync();
+        await RunAsync(() => Workflow.StartChecksAsync(release.Id, userId));
+    }
+
+    private async Task ApproveAsync()
+    {
+        if (!canManageRelease)
+        {
+            message = "You do not have permission to approve releases.";
+            return;
+        }
+
+        if (release is null)
+        {
+            return;
+        }
+
+        var userId = await CurrentUserIdAsync();
+        await RunAsync(() => Workflow.ApproveAsync(release.Id, userId));
+    }
+
+    private async Task BlockAsync()
+    {
+        if (!canManageRelease)
+        {
+            message = "You do not have permission to block releases.";
+            return;
+        }
+
+        if (release is null)
+        {
+            return;
+        }
+
+        var userId = await CurrentUserIdAsync();
+        await RunAsync(() => Workflow.BlockAsync(release.Id, userId, blockReason));
+    }
+
+    private async Task RunAsync(Func<Task<ReleaseWorkflowResult>> action)
+    {
+        busy = true;
+        var result = await action();
+        message = result.Message;
+        busy = false;
+        await LoadAsync();
+    }
+
+    private async Task LoadAuthorizationAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        canRunChecks = (await AuthorizationService.AuthorizeAsync(authState.User, LaunchpadPolicies.RunChecks)).Succeeded;
+        canManageRelease = (await AuthorizationService.AuthorizeAsync(authState.User, LaunchpadPolicies.ManageRelease)).Succeeded;
+    }
+
+    private async Task<string> CurrentUserIdAsync()
+    {
+        var authState = await AuthStateProvider.GetAuthenticationStateAsync();
+        return authState.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value ?? "";
+    }
+
+    private void OnLaunchpadChanged(object? sender, EventArgs e)
+    {
+        _ = InvokeAsync(async () =>
+        {
+            await LoadAsync();
+            StateHasChanged();
+        });
+    }
+
+    public void Dispose()
+    {
+        Notifier.Changed -= OnLaunchpadChanged;
+    }
+}

@@ -1,0 +1,39 @@
+@page "/qa"
+@attribute [Authorize]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>QA Bugs</PageTitle>
+
+<h1>QA Bugs</h1>
+
+<section class="stack">
+    @foreach (var bug in bugs)
+    {
+        <FluentCard Class="launch-card">
+            <div class="split">
+                <div>
+                    <p class="eyebrow">@bug.Release.Project.Name / @bug.Release.Version</p>
+                    <h2>@bug.Title</h2>
+                    <p>@bug.Description</p>
+                </div>
+                <span class="status-pill">@bug.Severity / @bug.Status</span>
+            </div>
+        </FluentCard>
+    }
+</section>
+
+@code {
+    private List<BugReport> bugs = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        bugs = await db.BugReports
+            .AsNoTracking()
+            .Include(x => x.Release)
+            .ThenInclude(x => x.Project)
+            .OrderByDescending(x => x.Severity)
+            .ThenByDescending(x => x.CreatedAt)
+            .ToListAsync();
+    }
+}

@@ -1,0 +1,13 @@
+bin/
+obj/
+TestResults/
+playwright-report/
+.vs/
+.vscode/
+.idea/
+.dotnet/
+*.user
+*.suo
+*.db
+*.db-shm
+*.db-wal

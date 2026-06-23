@@ -1,0 +1,37 @@
+@page "/feedback"
+@attribute [Authorize]
+@inject IDbContextFactory<ApplicationDbContext> DbFactory
+
+<PageTitle>Playtest Feedback</PageTitle>
+
+<h1>Playtest Feedback</h1>
+
+<section class="stack">
+    @foreach (var item in feedback)
+    {
+        <FluentCard Class="launch-card">
+            <div class="split">
+                <div>
+                    <p class="eyebrow">@item.Project.Name / @item.Source</p>
+                    <h2>@item.TesterAlias</h2>
+                    <p>@item.Body</p>
+                </div>
+                <span class="status-pill">@item.Sentiment</span>
+            </div>
+        </FluentCard>
+    }
+</section>
+
+@code {
+    private List<PlaytestFeedback> feedback = [];
+
+    protected override async Task OnInitializedAsync()
+    {
+        await using var db = await DbFactory.CreateDbContextAsync();
+        feedback = await db.PlaytestFeedback
+            .AsNoTracking()
+            .Include(x => x.Project)
+            .OrderByDescending(x => x.CreatedAt)
+            .ToListAsync();
+    }
+}

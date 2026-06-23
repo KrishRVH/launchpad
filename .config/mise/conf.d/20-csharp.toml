@@ -1,0 +1,58 @@
+[tools]
+dotnet = "10.0.301"
+
+[tasks."csharp:restore"]
+description = "Restore .NET dependencies"
+run = """
+if find . -maxdepth 4 -name packages.lock.json -print -quit | grep -q .; then
+  dotnet restore Launchpad.slnx --locked-mode
+else
+  dotnet restore Launchpad.slnx --use-lock-file
+fi
+"""
+
+[tasks."csharp:tools:restore"]
+description = "Restore local .NET tools"
+run = "dotnet tool restore"
+
+[tasks."csharp:fmt"]
+description = "Format C# code"
+depends = ["csharp:restore"]
+run = "dotnet format Launchpad.slnx --no-restore"
+
+[tasks."csharp:fmt:check"]
+description = "Check C# formatting"
+depends = ["csharp:restore"]
+run = "dotnet format Launchpad.slnx --verify-no-changes --no-restore"
+
+[tasks."csharp:lint"]
+description = "Build C# with analyzers enabled"
+depends = ["csharp:restore"]
+run = "dotnet build Launchpad.slnx --no-restore --configuration Release -warnaserror -p:ContinuousIntegrationBuild=true -p:TreatWarningsAsErrors=true"
+
+[tasks."csharp:test"]
+description = "Run unit and integration tests"
+depends = ["csharp:restore"]
+run = "dotnet test tests/Launchpad.Tests/Launchpad.Tests.csproj --no-restore --configuration Release"
+
+[tasks."csharp:test:e2e"]
+description = "Run Playwright smoke tests"
+depends = ["csharp:restore"]
+run = "dotnet test tests/Launchpad.PlaywrightTests/Launchpad.PlaywrightTests.csproj --no-restore --configuration Release"
+
+[tasks."csharp:ef"]
+description = "Run dotnet-ef"
+depends = ["csharp:restore", "csharp:tools:restore"]
+run = "dotnet tool run dotnet-ef --"
+
+[tasks."csharp:check"]
+description = "Run C# formatting, analysis, and tests"
+run = """
+mise run csharp:fmt:check
+mise run csharp:lint
+mise run csharp:test
+"""
+
+[tasks."csharp:ci"]
+description = "Run the C# CI gate"
+depends = ["csharp:check"]
