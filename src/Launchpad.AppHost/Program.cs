@@ -15,4 +15,4 @@ builder.AddProject<Projects.Launchpad_Web>("launchpad-web")
     .WaitFor(launchpadDb)
     .WithExternalHttpEndpoints();
 
-await builder.Build().RunAsync();
+await builder.Build().RunAsync().ConfigureAwait(false);

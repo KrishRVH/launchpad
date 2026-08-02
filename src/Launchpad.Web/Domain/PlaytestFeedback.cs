@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public sealed class PlaytestFeedback {
+public sealed class PlaytestFeedback
+{
     public Guid Id { get; set; }
     public Guid GameProjectId { get; set; }
     public GameProject Project { get; set; } = null!;

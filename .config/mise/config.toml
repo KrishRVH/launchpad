@@ -1,9 +1,15 @@
+min_version = "2026.6.12"
+
 [settings]
 lockfile = true
 
 [env]
 DOTNET_CLI_TELEMETRY_OPTOUT = "1"
 DOTNET_NOLOGO = "1"
+
+[tools]
+gitleaks = "8.30.1"
+syft = "1.49.0"
 
 [tasks.install]
 description = "Install pinned project tools and restore dependencies"
@@ -25,6 +31,22 @@ run = "mise doctor"
 description = "List available project tasks"
 run = "mise tasks"
 
+[tasks.secrets]
+description = "Scan the working tree for secrets"
+run = "gitleaks dir . --redact --no-banner"
+
+[tasks.sbom]
+description = "Generate a CycloneDX JSON SBOM for the project filesystem"
+run = """
+set -eu
+source_name="${SYFT_SOURCE_NAME:-$(basename "$PWD")}"
+source_version="${SYFT_SOURCE_VERSION:-0.0.0}"
+export SYFT_CHECK_FOR_APP_UPDATE="${SYFT_CHECK_FOR_APP_UPDATE:-false}"
+rm -rf sbom
+mkdir -p sbom
+syft scan dir:. --source-name "$source_name" --source-version "$source_version" --exclude ./sbom --exclude ./.git --output cyclonedx-json=sbom/sbom.cdx.json
+"""
+
 [tasks.fmt]
 description = "Format the project"
 depends = ["csharp:fmt"]
@@ -41,13 +63,21 @@ depends = ["csharp:lint"]
 description = "Run the normal test suite"
 depends = ["csharp:test"]
 
+[tasks.standards]
+description = "Run standards workflows and available autofixes"
+depends = ["csharp:standards"]
+
+[tasks."standards:check"]
+description = "Run the standards CI gate"
+depends = ["secrets", "csharp:standards:check"]
+
 [tasks.check]
 description = "Run the normal local gate"
-depends = ["csharp:check"]
+depends = ["csharp:standards:check"]
 
 [tasks.ci]
 description = "Run the CI gate"
-depends = ["csharp:ci"]
+depends = ["standards:check"]
 
 [tasks.dev]
 description = "Run the Aspire AppHost"

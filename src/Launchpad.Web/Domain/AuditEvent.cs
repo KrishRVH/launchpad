@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public sealed class AuditEvent {
+public sealed class AuditEvent
+{
     public long Id { get; set; }
     public string? ActorUserId { get; set; }
     public string Action { get; set; } = "";

@@ -1,12 +1,20 @@
 <Project>
   <PropertyGroup>
-    <AnalysisLevel>latest</AnalysisLevel>
-    <AnalysisMode>Recommended</AnalysisMode>
+    <AllowUnsafeBlocks>false</AllowUnsafeBlocks>
+    <AnalysisLevel>10.0-recommended</AnalysisLevel>
+    <AnalysisLevelPerformance>10.0-all</AnalysisLevelPerformance>
+    <AnalysisLevelReliability>10.0-all</AnalysisLevelReliability>
+    <AnalysisLevelSecurity>10.0-all</AnalysisLevelSecurity>
+    <AnalysisLevelUsage>10.0-all</AnalysisLevelUsage>
+    <CentralPackageTransitivePinningEnabled>false</CentralPackageTransitivePinningEnabled>
+    <CentralPackageVersionOverrideEnabled>false</CentralPackageVersionOverrideEnabled>
+    <CheckForOverflowUnderflow>true</CheckForOverflowUnderflow>
     <CodeAnalysisTreatWarningsAsErrors>true</CodeAnalysisTreatWarningsAsErrors>
     <Deterministic>true</Deterministic>
     <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <EnablePreviewFeatures>false</EnablePreviewFeatures>
     <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
-    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
     <ImplicitUsings>enable</ImplicitUsings>
     <LangVersion>14.0</LangVersion>
     <Nullable>enable</Nullable>
@@ -15,14 +23,13 @@
     <NuGetAuditMode>all</NuGetAuditMode>
     <RestoreLockedMode Condition="'$(CI)' == 'true'">true</RestoreLockedMode>
     <RestorePackagesWithLockFile>true</RestorePackagesWithLockFile>
+    <TestingPlatformCommandLineArguments>$(TestingPlatformCommandLineArguments) --minimum-expected-tests 1</TestingPlatformCommandLineArguments>
     <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
     <WarningsAsErrors>$(WarningsAsErrors);nullable</WarningsAsErrors>
-    <NoWarn>$(NoWarn);1591</NoWarn>
   </PropertyGroup>
 
   <ItemGroup>
     <PackageReference Include="Meziantou.Analyzer" PrivateAssets="all" />
-    <PackageReference Include="Microsoft.CodeAnalysis.NetAnalyzers" PrivateAssets="all" />
     <PackageReference Include="Roslynator.Analyzers" PrivateAssets="all" />
   </ItemGroup>
 </Project>

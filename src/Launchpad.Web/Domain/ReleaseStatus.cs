@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public enum ReleaseStatus {
+public enum ReleaseStatus
+{
     Draft = 0,
     Checking = 1,
     Ready = 2,

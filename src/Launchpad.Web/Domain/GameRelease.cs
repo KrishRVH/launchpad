@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public sealed class GameRelease {
+public sealed class GameRelease
+{
     public Guid Id { get; set; }
     public Guid GameProjectId { get; set; }
     public GameProject Project { get; set; } = null!;
@@ -14,6 +15,6 @@ public sealed class GameRelease {
     public string? ApprovedByUserId { get; set; }
     public string? BlockedReason { get; set; }
 
-    public List<ReleaseGate> Gates { get; set; } = [];
-    public List<BugReport> Bugs { get; set; } = [];
+    public List<ReleaseGate> Gates { get; } = [];
+    public List<BugReport> Bugs { get; } = [];
 }

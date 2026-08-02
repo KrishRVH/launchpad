@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public static class LaunchpadRoles {
+public static class LaunchpadRoles
+{
     public const string Admin = "Admin";
     public const string Producer = "Producer";
     public const string Developer = "Developer";

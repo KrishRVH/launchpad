@@ -69,6 +69,8 @@ mise run fmt
 mise run fmt:check
 mise run lint
 mise run test
+mise run standards
+mise run standards:check
 mise run check
 mise run dev
 ```
@@ -85,8 +87,8 @@ The AppHost exposes the `launchpaddb` PostgreSQL database through Aspire's
 Postgres MCP server while the app is running.
 
 ```sh
-dotnet tool run aspire -- mcp tools
-dotnet tool run aspire -- mcp call launchpaddb-mcp execute_sql --input '{"sql":"SELECT 1 AS value;"}'
+mise run csharp:aspire -- mcp tools
+mise run csharp:aspire -- mcp call launchpaddb-mcp execute_sql --input '{"sql":"SELECT 1 AS value;"}'
 ```
 
 ## Integration API

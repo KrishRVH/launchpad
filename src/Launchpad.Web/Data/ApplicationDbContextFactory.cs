@@ -3,12 +3,15 @@ using Microsoft.EntityFrameworkCore.Design;
 
 namespace Launchpad.Web.Data;
 
-public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext> {
-    public ApplicationDbContext CreateDbContext(string[] args) {
+public sealed class ApplicationDbContextFactory : IDesignTimeDbContextFactory<ApplicationDbContext>
+{
+    public ApplicationDbContext CreateDbContext(string[] args)
+    {
         DbContextOptionsBuilder<ApplicationDbContext> options = new();
         string basePath = Directory.GetCurrentDirectory();
         string projectPath = Path.Combine(basePath, "src", "Launchpad.Web");
-        if (Directory.Exists(projectPath)) {
+        if (Directory.Exists(projectPath))
+        {
             basePath = projectPath;
         }
 

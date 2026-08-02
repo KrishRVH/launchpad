@@ -1,14 +1,18 @@
 namespace Launchpad.Web.Domain;
 
-public static class ReleasePolicy {
-    public static bool CanApprove(GameRelease release) {
+public static class ReleasePolicy
+{
+    public static bool CanApprove(GameRelease release)
+    {
         ReleaseGate[] required = [.. release.Gates.Where(gate => gate.IsRequired)];
         return required.Length > 0 && required.All(gate => gate.Status == GateStatus.Passed);
     }
 
-    public static ReleaseStatus StatusForGates(IEnumerable<ReleaseGate> gates) {
+    public static ReleaseStatus StatusForGates(IEnumerable<ReleaseGate> gates)
+    {
         ReleaseGate[] required = [.. gates.Where(gate => gate.IsRequired)];
-        if (required.Any(gate => gate.Status == GateStatus.Failed)) {
+        if (required.Any(gate => gate.Status == GateStatus.Failed))
+        {
             return ReleaseStatus.Blocked;
         }
 

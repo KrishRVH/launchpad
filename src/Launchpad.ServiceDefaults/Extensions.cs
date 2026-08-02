@@ -10,12 +10,15 @@ using OpenTelemetry.Trace;
 
 namespace Launchpad.ServiceDefaults;
 
-public static class Extensions {
-    public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder) {
+public static class Extensions
+{
+    public static IHostApplicationBuilder AddServiceDefaults(this IHostApplicationBuilder builder)
+    {
         builder.ConfigureOpenTelemetry();
 
         builder.Services.AddServiceDiscovery();
-        builder.Services.ConfigureHttpClientDefaults(http => {
+        builder.Services.ConfigureHttpClientDefaults(http =>
+        {
             http.AddStandardResilienceHandler();
             http.AddServiceDiscovery();
         });
@@ -26,10 +29,13 @@ public static class Extensions {
         return builder;
     }
 
-    public static WebApplication MapDefaultEndpoints(this WebApplication app) {
-        if (app.Environment.IsDevelopment()) {
+    public static WebApplication MapDefaultEndpoints(this WebApplication app)
+    {
+        if (app.Environment.IsDevelopment())
+        {
             app.MapHealthChecks("/health");
-            app.MapHealthChecks("/alive", new HealthCheckOptions {
+            app.MapHealthChecks("/alive", new HealthCheckOptions
+            {
                 Predicate = check => check.Tags.Contains("live"),
             });
         }
@@ -37,21 +43,26 @@ public static class Extensions {
         return app;
     }
 
-    private static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder) {
-        builder.Logging.AddOpenTelemetry(logging => {
+    private static IHostApplicationBuilder ConfigureOpenTelemetry(this IHostApplicationBuilder builder)
+    {
+        builder.Logging.AddOpenTelemetry(logging =>
+        {
             logging.IncludeFormattedMessage = true;
             logging.IncludeScopes = true;
         });
 
         builder.Services.AddOpenTelemetry()
-            .WithMetrics(metrics => {
+            .WithMetrics(metrics =>
+            {
                 metrics.AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
                     .AddRuntimeInstrumentation();
             })
-            .WithTracing(tracing => {
+            .WithTracing(tracing =>
+            {
                 tracing.AddSource(builder.Environment.ApplicationName)
-                    .AddAspNetCoreInstrumentation(tracingOptions => {
+                    .AddAspNetCoreInstrumentation(tracingOptions =>
+                    {
                         tracingOptions.Filter = context =>
                             !context.Request.Path.StartsWithSegments("/health", StringComparison.Ordinal) &&
                             !context.Request.Path.StartsWithSegments("/alive", StringComparison.Ordinal);
@@ -64,10 +75,12 @@ public static class Extensions {
         return builder;
     }
 
-    private static IHostApplicationBuilder AddOpenTelemetryExporters(this IHostApplicationBuilder builder) {
+    private static IHostApplicationBuilder AddOpenTelemetryExporters(this IHostApplicationBuilder builder)
+    {
         bool useOtlpExporter = !string.IsNullOrWhiteSpace(builder.Configuration["OTEL_EXPORTER_OTLP_ENDPOINT"]);
 
-        if (useOtlpExporter) {
+        if (useOtlpExporter)
+        {
             builder.Services.Configure<OpenTelemetryLoggerOptions>(logging => logging.AddOtlpExporter());
             builder.Services.ConfigureOpenTelemetryMeterProvider(metrics => metrics.AddOtlpExporter());
             builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddOtlpExporter());

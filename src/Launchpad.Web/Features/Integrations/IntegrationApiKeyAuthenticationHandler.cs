@@ -1,10 +1,10 @@
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.Extensions.Options;
-using Microsoft.Extensions.Primitives;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Encodings.Web;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.Extensions.Options;
+using Microsoft.Extensions.Primitives;
 
 namespace Launchpad.Web.Features.Integrations;
 
@@ -13,18 +13,23 @@ public sealed class IntegrationApiKeyAuthenticationHandler(
     ILoggerFactory logger,
     UrlEncoder encoder,
     IConfiguration configuration)
-    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder) {
-    protected override Task<AuthenticateResult> HandleAuthenticateAsync() {
+    : AuthenticationHandler<AuthenticationSchemeOptions>(options, logger, encoder)
+{
+    protected override Task<AuthenticateResult> HandleAuthenticateAsync()
+    {
         string? expected = configuration["Launchpad:IntegrationApiKey"];
-        if (string.IsNullOrWhiteSpace(expected)) {
+        if (string.IsNullOrWhiteSpace(expected))
+        {
             return Task.FromResult(AuthenticateResult.Fail("Integration API key is not configured."));
         }
 
-        if (!Request.Headers.TryGetValue(IntegrationApiKeyDefaults.HeaderName, out StringValues provided)) {
+        if (!Request.Headers.TryGetValue(IntegrationApiKeyDefaults.HeaderName, out StringValues provided))
+        {
             return Task.FromResult(AuthenticateResult.NoResult());
         }
 
-        if (!SecretsEqual(provided.ToString(), expected)) {
+        if (!SecretsEqual(provided.ToString(), expected))
+        {
             return Task.FromResult(AuthenticateResult.Fail("Invalid integration API key."));
         }
 
@@ -36,7 +41,8 @@ public sealed class IntegrationApiKeyAuthenticationHandler(
         return Task.FromResult(AuthenticateResult.Success(new AuthenticationTicket(principal, Scheme.Name)));
     }
 
-    private static bool SecretsEqual(string actual, string expected) {
+    private static bool SecretsEqual(string actual, string expected)
+    {
         byte[] actualHash = SHA256.HashData(Encoding.UTF8.GetBytes(actual));
         byte[] expectedHash = SHA256.HashData(Encoding.UTF8.GetBytes(expected));
         return CryptographicOperations.FixedTimeEquals(actualHash, expectedHash);

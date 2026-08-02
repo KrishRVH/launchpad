@@ -27,7 +27,8 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
 
-builder.Services.AddAuthentication(options => {
+builder.Services.AddAuthentication(options =>
+{
     options.DefaultScheme = IdentityConstants.ApplicationScheme;
     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
 })
@@ -58,7 +59,8 @@ builder.Services.AddAuthorizationBuilder()
     .AddPolicy(LaunchpadPolicies.ManageRelease, policy => policy.RequireRole(LaunchpadRoles.Admin, LaunchpadRoles.Producer))
     .AddPolicy(LaunchpadPolicies.RunChecks, policy => policy.RequireRole(LaunchpadRoles.Admin, LaunchpadRoles.Producer, LaunchpadRoles.Developer, LaunchpadRoles.QA))
     .AddPolicy(LaunchpadPolicies.ManageQa, policy => policy.RequireRole(LaunchpadRoles.Admin, LaunchpadRoles.Producer, LaunchpadRoles.QA))
-    .AddPolicy(LaunchpadPolicies.IntegrationWrite, policy => {
+    .AddPolicy(LaunchpadPolicies.IntegrationWrite, policy =>
+    {
         policy.AddAuthenticationSchemes(IntegrationApiKeyDefaults.AuthenticationScheme)
             .RequireAuthenticatedUser();
     })
@@ -68,16 +70,20 @@ builder.Services.AddOpenApi();
 
 WebApplication app = builder.Build();
 
-if (app.Environment.IsDevelopment()) {
+if (app.Environment.IsDevelopment())
+{
     app.UseMigrationsEndPoint();
     app.MapOpenApi();
-} else {
+}
+else
+{
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
     app.UseHsts();
 }
 app.UseStatusCodePagesWithReExecute("/not-found", createScopeForStatusCodePages: true);
 app.UseHttpsRedirection();
-app.Use(async (context, next) => {
+app.Use(async (context, next) =>
+{
     IHeaderDictionary headers = context.Response.Headers;
     headers["X-Content-Type-Options"] = "nosniff";
     headers["X-Frame-Options"] = "DENY";
@@ -99,9 +105,13 @@ app.MapAdditionalIdentityEndpoints();
 app.MapIntegrationApi();
 app.MapDefaultEndpoints();
 
-if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Launchpad:SeedDemoData")) {
-    await using AsyncServiceScope scope = app.Services.CreateAsyncScope();
-    await LaunchpadSeeder.SeedAsync(scope.ServiceProvider).ConfigureAwait(false);
+if (app.Environment.IsDevelopment() || app.Configuration.GetValue<bool>("Launchpad:SeedDemoData"))
+{
+    AsyncServiceScope scope = app.Services.CreateAsyncScope();
+    await using (scope.ConfigureAwait(false))
+    {
+        await LaunchpadSeeder.SeedAsync(scope.ServiceProvider).ConfigureAwait(false);
+    }
 }
 
-await app.RunAsync();
+await app.RunAsync().ConfigureAwait(false);

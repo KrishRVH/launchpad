@@ -91,15 +91,9 @@
       },
       "Meziantou.Analyzer": {
         "type": "Direct",
-        "requested": "[3.0.105, )",
-        "resolved": "3.0.105",
-        "contentHash": "FIKEIfeyvZTpTounqQKYwuuRR6YWiwzvHIvearkjH7LMIje/+px/WI1ehAob2mPMSC38p13/yIyf6zDQ+d0RTQ=="
-      },
-      "Microsoft.CodeAnalysis.NetAnalyzers": {
-        "type": "Direct",
-        "requested": "[10.0.301, )",
-        "resolved": "10.0.301",
-        "contentHash": "QAHyooyQN0JB95pI8q/N/eAH7Bb0OWSDSSNFGlmuxC+b/fXUVQJJChOBE6ygJFNkRj42u7rCHCSCPQC5n30tNg=="
+        "requested": "[3.0.117, )",
+        "resolved": "3.0.117",
+        "contentHash": "22L/6jjjhTwOpGqN+3A4EMCWc8Kc0dAd49zINAlxjLYDxERnD1qPKDkE9Z6cZPjiOs32J9nsieyya1FO+kXHCw=="
       },
       "Roslynator.Analyzers": {
         "type": "Direct",

@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public enum GateStatus {
+public enum GateStatus
+{
     Pending = 0,
     Queued = 1,
     Running = 2,

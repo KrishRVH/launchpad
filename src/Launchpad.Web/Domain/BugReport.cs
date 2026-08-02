@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public sealed class BugReport {
+public sealed class BugReport
+{
     public Guid Id { get; set; }
     public Guid GameReleaseId { get; set; }
     public GameRelease Release { get; set; } = null!;

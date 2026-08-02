@@ -1,6 +1,7 @@
 namespace Launchpad.Web.Domain;
 
-public sealed class ReleaseCheckRun {
+public sealed class ReleaseCheckRun
+{
     public Guid Id { get; set; }
     public Guid ReleaseGateId { get; set; }
     public ReleaseGate Gate { get; set; } = null!;

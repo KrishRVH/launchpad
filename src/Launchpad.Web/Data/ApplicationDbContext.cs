@@ -4,7 +4,8 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Launchpad.Web.Data;
 
-public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options) {
+public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options) : IdentityDbContext<ApplicationUser>(options)
+{
     public DbSet<GameProject> GameProjects => Set<GameProject>();
     public DbSet<GameRelease> GameReleases => Set<GameRelease>();
     public DbSet<ReleaseGate> ReleaseGates => Set<ReleaseGate>();
@@ -14,15 +15,18 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
     public DbSet<TeamNotification> TeamNotifications => Set<TeamNotification>();
     public DbSet<AuditEvent> AuditEvents => Set<AuditEvent>();
 
-    protected override void OnModelCreating(ModelBuilder builder) {
+    protected override void OnModelCreating(ModelBuilder builder)
+    {
         base.OnModelCreating(builder);
 
-        builder.Entity<GameProject>(entity => {
+        builder.Entity<GameProject>(entity =>
+        {
             entity.HasIndex(project => project.CodeName).IsUnique();
             entity.Property(project => project.Name).HasMaxLength(120);
             entity.Property(project => project.CodeName).HasMaxLength(80);
         })
-            .Entity<GameRelease>(entity => {
+            .Entity<GameRelease>(entity =>
+            {
                 entity.HasIndex(release => new { release.GameProjectId, release.Version }).IsUnique();
                 entity.Property(release => release.Status).HasConversion<string>().HasMaxLength(32);
                 entity.Property(release => release.Version).HasMaxLength(40);
@@ -31,7 +35,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     .HasForeignKey(release => release.GameProjectId)
                     .OnDelete(DeleteBehavior.Cascade);
             })
-            .Entity<ReleaseGate>(entity => {
+            .Entity<ReleaseGate>(entity =>
+            {
                 entity.HasIndex(gate => new { gate.GameReleaseId, gate.Name }).IsUnique();
                 entity.HasIndex(gate => new { gate.GameReleaseId, gate.SortOrder }).IsUnique();
                 entity.Property(gate => gate.Status).HasConversion<string>().HasMaxLength(32);
@@ -41,7 +46,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     .HasForeignKey(gate => gate.GameReleaseId)
                     .OnDelete(DeleteBehavior.Cascade);
             })
-            .Entity<ReleaseCheckRun>(entity => {
+            .Entity<ReleaseCheckRun>(entity =>
+            {
                 entity.HasIndex(run => new { run.Status, run.AttemptCount, run.QueuedAt });
                 entity.Property(run => run.Status).HasConversion<string>().HasMaxLength(32);
                 entity.Property(run => run.Kind).HasMaxLength(40);
@@ -50,7 +56,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     .HasForeignKey(run => run.ReleaseGateId)
                     .OnDelete(DeleteBehavior.Cascade);
             })
-            .Entity<BugReport>(entity => {
+            .Entity<BugReport>(entity =>
+            {
                 entity.Property(bug => bug.Severity).HasConversion<int>();
                 entity.Property(bug => bug.Status).HasConversion<string>().HasMaxLength(32);
                 entity.HasOne(bug => bug.Release)
@@ -58,7 +65,8 @@ public class ApplicationDbContext(DbContextOptions<ApplicationDbContext> options
                     .HasForeignKey(bug => bug.GameReleaseId)
                     .OnDelete(DeleteBehavior.Cascade);
             })
-            .Entity<PlaytestFeedback>(entity => {
+            .Entity<PlaytestFeedback>(entity =>
+            {
                 entity.Property(feedback => feedback.Sentiment).HasConversion<string>().HasMaxLength(32);
                 entity.HasOne(feedback => feedback.Project)
                     .WithMany(project => project.Feedback)

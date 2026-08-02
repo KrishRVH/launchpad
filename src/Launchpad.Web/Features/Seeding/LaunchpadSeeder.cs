@@ -5,10 +5,11 @@ using Microsoft.EntityFrameworkCore;
 
 namespace Launchpad.Web.Features.Seeding;
 
-public static class LaunchpadSeeder {
+public static class LaunchpadSeeder
+{
     public const string DemoPassword = "Launchpad!10";
 
-    private static readonly (string Email, string DisplayName, string Title, string Role)[] Users =
+    private static readonly (string Email, string DisplayName, string Title, string Role)[] s_users =
     [
         ("admin@launchpad.local", "Ari Admin", "Studio director", LaunchpadRoles.Admin),
         ("producer@launchpad.local", "Parker Producer", "Release producer", LaunchpadRoles.Producer),
@@ -17,22 +18,28 @@ public static class LaunchpadSeeder {
         ("observer@launchpad.local", "Ollie Observer", "Publisher viewer", LaunchpadRoles.Observer),
     ];
 
-    public static async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken = default) {
+    public static async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken = default)
+    {
         ApplicationDbContext db = services.GetRequiredService<ApplicationDbContext>();
         await db.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
 
         RoleManager<IdentityRole> roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
-        foreach (string role in LaunchpadRoles.All) {
-            if (!await roleManager.RoleExistsAsync(role).ConfigureAwait(false)) {
+        foreach (string role in LaunchpadRoles.All)
+        {
+            if (!await roleManager.RoleExistsAsync(role).ConfigureAwait(false))
+            {
                 await roleManager.CreateAsync(new IdentityRole(role)).ConfigureAwait(false);
             }
         }
 
         UserManager<ApplicationUser> userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
-        foreach ((string Email, string DisplayName, string Title, string Role) in Users) {
+        foreach ((string Email, string DisplayName, string Title, string Role) in s_users)
+        {
             ApplicationUser? user = await userManager.FindByEmailAsync(Email).ConfigureAwait(false);
-            if (user is null) {
-                user = new ApplicationUser {
+            if (user is null)
+            {
+                user = new ApplicationUser
+                {
                     UserName = Email,
                     Email = Email,
                     EmailConfirmed = true,
@@ -40,28 +47,33 @@ public static class LaunchpadSeeder {
                     StudioTitle = Title,
                 };
                 IdentityResult created = await userManager.CreateAsync(user, DemoPassword).ConfigureAwait(false);
-                if (!created.Succeeded) {
+                if (!created.Succeeded)
+                {
                     throw new InvalidOperationException(string.Join("; ", created.Errors.Select(error => error.Description)));
                 }
             }
 
-            if (!await userManager.IsInRoleAsync(user, Role).ConfigureAwait(false)) {
+            if (!await userManager.IsInRoleAsync(user, Role).ConfigureAwait(false))
+            {
                 await userManager.AddToRoleAsync(user, Role).ConfigureAwait(false);
             }
         }
 
-        if (await db.GameProjects.AnyAsync(cancellationToken).ConfigureAwait(false)) {
+        if (await db.GameProjects.AnyAsync(cancellationToken).ConfigureAwait(false))
+        {
             return;
         }
 
-        GameProject project = new() {
+        GameProject project = new()
+        {
             Id = Guid.NewGuid(),
             Name = "Starfall Tactics",
             CodeName = "starfall-tactics",
             Summary = "A tactics RPG about rival sky crews racing through a collapsing constellation.",
         };
 
-        GameRelease release = new() {
+        GameRelease release = new()
+        {
             Id = Guid.NewGuid(),
             Project = project,
             Version = "v1.0 Launch Candidate",
@@ -143,11 +155,13 @@ public static class LaunchpadSeeder {
         ]);
 
         db.GameProjects.Add(project);
-        db.TeamNotifications.Add(new TeamNotification {
+        db.TeamNotifications.Add(new TeamNotification
+        {
             Title = "Launchpad seeded",
             Body = "Open the War Room, start release checks, and ship Starfall Tactics.",
         });
-        db.AuditEvents.Add(new AuditEvent {
+        db.AuditEvents.Add(new AuditEvent
+        {
             Action = "seed.created",
             EntityType = nameof(GameProject),
             EntityId = project.Id.ToString(),
