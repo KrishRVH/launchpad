@@ -3,12 +3,15 @@ namespace Launchpad.PlaywrightTests;
 [TestClass]
 public sealed class WarRoomSmokeTests : PageTest
 {
+    private static string BaseUrl { get; set; } = null!;
+
+    [ClassInitialize]
+    public static void Initialize(TestContext _) => BaseUrl = RequiredBaseUrl();
+
     [TestMethod]
     public async Task ProducerCanOpenWarRoom()
     {
-        string baseUrl = RequiredBaseUrl();
-
-        await Page.GotoAsync($"{baseUrl}/Account/Login?ReturnUrl=%2F").ConfigureAwait(false);
+        await Page.GotoAsync($"{BaseUrl}/Account/Login?ReturnUrl=%2F").ConfigureAwait(false);
         await Page.GetByLabel("Email").FillAsync("producer@launchpad.local").ConfigureAwait(false);
         await Page.GetByLabel("Password").FillAsync("Launchpad!10").ConfigureAwait(false);
         await Page.GetByRole(AriaRole.Button, new() { Name = "Log in" }).ClickAsync().ConfigureAwait(false);

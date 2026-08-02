@@ -83,7 +83,3 @@ depends = ["standards:check"]
 description = "Run the Aspire AppHost"
 depends = ["csharp:tools:restore"]
 run = "dotnet tool run aspire -- run --apphost src/Launchpad.AppHost/Launchpad.AppHost.csproj"
-
-[tasks.run]
-description = "Alias for dev"
-depends = ["dev"]

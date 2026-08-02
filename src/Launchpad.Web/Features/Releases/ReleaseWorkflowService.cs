@@ -10,11 +10,13 @@ public sealed partial class ReleaseWorkflowService(
     ApplicationDbContext db,
     ReleaseCheckSignal signal,
     LaunchpadNotifier notifier,
+    TimeProvider timeProvider,
     ILogger<ReleaseWorkflowService> logger)
 {
     private readonly ApplicationDbContext _db = db;
     private readonly ReleaseCheckSignal _signal = signal;
     private readonly LaunchpadNotifier _notifier = notifier;
+    private readonly TimeProvider _timeProvider = timeProvider;
     private readonly ILogger<ReleaseWorkflowService> _logger = logger;
 
     public async Task<ReleaseWorkflowResult> StartChecksAsync(Guid releaseId, string userId, CancellationToken cancellationToken = default)
@@ -36,6 +38,7 @@ public sealed partial class ReleaseWorkflowService(
         release.Status = ReleaseStatus.Checking;
         release.BlockedReason = null;
 
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         List<Guid> runIds = [];
         foreach (ReleaseGate gate in release.Gates)
         {
@@ -47,7 +50,7 @@ public sealed partial class ReleaseWorkflowService(
                 Kind = gate.Name,
                 Status = GateStatus.Queued,
                 RequestedByUserId = userId,
-                QueuedAt = DateTimeOffset.UtcNow,
+                QueuedAt = now,
                 Log = $"Queued {gate.Name} check.",
             };
             _db.ReleaseCheckRuns.Add(run);
@@ -61,6 +64,7 @@ public sealed partial class ReleaseWorkflowService(
             EntityType = nameof(GameRelease),
             EntityId = release.Id.ToString(),
             Detail = $"Queued {runIds.Count} release checks for {release.Version}.",
+            CreatedAt = now,
         });
 
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -89,8 +93,9 @@ public sealed partial class ReleaseWorkflowService(
             return ReleaseWorkflowResult.Fail("All required gates must pass before launch approval.");
         }
 
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         release.Status = ReleaseStatus.Approved;
-        release.ApprovedAt = DateTimeOffset.UtcNow;
+        release.ApprovedAt = now;
         release.ApprovedByUserId = userId;
         release.BlockedReason = null;
 
@@ -101,6 +106,7 @@ public sealed partial class ReleaseWorkflowService(
             EntityType = nameof(GameRelease),
             EntityId = release.Id.ToString(),
             Detail = $"{release.Version} approved for launch.",
+            CreatedAt = now,
         });
 
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -119,6 +125,7 @@ public sealed partial class ReleaseWorkflowService(
         release.Status = ReleaseStatus.Blocked;
         release.BlockedReason = string.IsNullOrWhiteSpace(reason) ? "Blocked by release team." : reason.Trim();
 
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         _db.AuditEvents.Add(new AuditEvent
         {
             ActorUserId = userId,
@@ -126,6 +133,7 @@ public sealed partial class ReleaseWorkflowService(
             EntityType = nameof(GameRelease),
             EntityId = release.Id.ToString(),
             Detail = release.BlockedReason,
+            CreatedAt = now,
         });
 
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -146,10 +154,11 @@ public sealed partial class ReleaseWorkflowService(
             return null;
         }
 
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         run.Status = GateStatus.Running;
         run.AttemptCount++;
-        run.ClaimedAt = DateTimeOffset.UtcNow;
-        run.StartedAt = DateTimeOffset.UtcNow;
+        run.ClaimedAt = now;
+        run.StartedAt = now;
         run.ClaimedBy = workerId;
         run.Log += $"{Environment.NewLine}Claimed by {workerId}.";
         run.Gate.Status = GateStatus.Running;
@@ -160,6 +169,7 @@ public sealed partial class ReleaseWorkflowService(
             EntityType = nameof(ReleaseCheckRun),
             EntityId = run.Id.ToString(),
             Detail = $"{run.Kind} check started.",
+            CreatedAt = now,
         });
 
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -175,8 +185,9 @@ public sealed partial class ReleaseWorkflowService(
             .ThenInclude(x => x.Gates)
             .SingleAsync(x => x.Id == runId, cancellationToken).ConfigureAwait(false);
 
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         run.Status = passed ? GateStatus.Passed : GateStatus.Failed;
-        run.CompletedAt = DateTimeOffset.UtcNow;
+        run.CompletedAt = now;
         run.Log += Environment.NewLine + log;
         run.FailureReason = passed ? null : "Release check failed.";
         run.Gate.Status = run.Status;
@@ -197,6 +208,7 @@ public sealed partial class ReleaseWorkflowService(
             EntityType = nameof(ReleaseCheckRun),
             EntityId = run.Id.ToString(),
             Detail = $"{run.Kind} check {(passed ? "passed" : "failed")}.",
+            CreatedAt = now,
         });
 
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -237,6 +249,7 @@ public sealed partial class ReleaseWorkflowService(
             ? null
             : project.Releases.SingleOrDefault(x => string.Equals(x.Version, releaseVersion, StringComparison.Ordinal));
 
+        DateTimeOffset now = _timeProvider.GetUtcNow();
         _db.PlaytestFeedback.Add(new PlaytestFeedback
         {
             GameProjectId = project.Id,
@@ -245,6 +258,7 @@ public sealed partial class ReleaseWorkflowService(
             Sentiment = sentiment,
             Body = body.Trim(),
             Source = source,
+            CreatedAt = now,
         });
 
         _db.AuditEvents.Add(new AuditEvent
@@ -253,6 +267,7 @@ public sealed partial class ReleaseWorkflowService(
             EntityType = nameof(PlaytestFeedback),
             EntityId = project.Id.ToString(),
             Detail = $"Feedback ingested from {source}.",
+            CreatedAt = now,
         });
 
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
@@ -270,7 +285,8 @@ public sealed partial class ReleaseWorkflowService(
             return;
         }
 
-        DateTimeOffset since = DateTimeOffset.UtcNow.AddHours(-12);
+        DateTimeOffset now = _timeProvider.GetUtcNow();
+        DateTimeOffset since = now.AddHours(-12);
         bool alreadySent = await _db.TeamNotifications
             .AnyAsync(x => x.Title == "High-severity bugs need review" && x.CreatedAt >= since, cancellationToken).ConfigureAwait(false);
 
@@ -283,12 +299,14 @@ public sealed partial class ReleaseWorkflowService(
         {
             Title = "High-severity bugs need review",
             Body = string.Create(CultureInfo.InvariantCulture, $"{staleCount} high-severity bug(s) are still open before launch."),
+            CreatedAt = now,
         });
         _db.AuditEvents.Add(new AuditEvent
         {
             Action = "bug.reminder_created",
             EntityType = nameof(BugReport),
             Detail = string.Create(CultureInfo.InvariantCulture, $"{staleCount} high-severity bug(s) require review."),
+            CreatedAt = now,
         });
 
         await _db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);

@@ -39,9 +39,11 @@ This app intentionally keeps Blazor's implicit usings enabled and relaxes a few
 template-hostile analyzer rules in `.editorconfig`. The local standards repo is
 stricter for library code, but the generated Blazor/Identity surface is clearer
 and closer to current .NET templates with these targeted exceptions.
+
 XML documentation output is disabled because this repository ships an
 application, not a public library; framework-facing public types remain local
 implementation details.
+
 The normal test gate excludes browser smoke tests because they require a running
 AppHost; run them explicitly with `mise run csharp:test:e2e`.
 

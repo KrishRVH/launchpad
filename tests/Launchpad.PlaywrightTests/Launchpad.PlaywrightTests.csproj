@@ -1,4 +1,4 @@
-﻿<Project Sdk="MSTest.Sdk">
+<Project Sdk="MSTest.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
@@ -14,7 +14,6 @@
     <Using Include="Microsoft.Playwright" />
     <Using Include="Microsoft.Playwright.MSTest" />
     <Using Include="Microsoft.VisualStudio.TestTools.UnitTesting" />
-    <Using Include="System.Threading.Tasks" />
   </ItemGroup>
 
 </Project>

@@ -15,6 +15,11 @@ using Microsoft.FluentUI.AspNetCore.Components;
 
 WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
+builder.Host.UseDefaultServiceProvider(options =>
+{
+    options.ValidateOnBuild = true;
+    options.ValidateScopes = true;
+});
 builder.AddServiceDefaults();
 
 builder.Services.AddHttpClient();
@@ -50,6 +55,7 @@ builder.Services.AddIdentityCore<ApplicationUser>(options => options.SignIn.Requ
     .AddDefaultTokenProviders();
 
 builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
+builder.Services.AddSingleton(TimeProvider.System);
 builder.Services.AddSingleton<LaunchpadNotifier>();
 builder.Services.AddSingleton<ReleaseCheckSignal>();
 builder.Services.AddScoped<ReleaseWorkflowService>();

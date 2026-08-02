@@ -23,9 +23,12 @@ public sealed partial class StudioReminderWorker(IServiceScopeFactory scopeFacto
     {
         try
         {
-            using IServiceScope scope = _scopeFactory.CreateScope();
-            ReleaseWorkflowService workflow = scope.ServiceProvider.GetRequiredService<ReleaseWorkflowService>();
-            await workflow.CreateStaleBugRemindersAsync(cancellationToken).ConfigureAwait(false);
+            AsyncServiceScope scope = _scopeFactory.CreateAsyncScope();
+            await using (scope.ConfigureAwait(false))
+            {
+                ReleaseWorkflowService workflow = scope.ServiceProvider.GetRequiredService<ReleaseWorkflowService>();
+                await workflow.CreateStaleBugRemindersAsync(cancellationToken).ConfigureAwait(false);
+            }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
         {

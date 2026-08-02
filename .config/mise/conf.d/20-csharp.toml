@@ -53,11 +53,3 @@ depends = ["csharp:fmt"]
 [tasks."csharp:standards:check"]
 description = "Run the C# standards CI gate"
 depends = ["csharp:fmt:check", "csharp:lint", "csharp:test"]
-
-[tasks."csharp:check"]
-description = "Alias for the C# standards gate"
-depends = ["csharp:standards:check"]
-
-[tasks."csharp:ci"]
-description = "Alias for the C# standards gate"
-depends = ["csharp:standards:check"]

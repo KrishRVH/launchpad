@@ -1,4 +1,4 @@
-﻿@page "/"
+@page "/"
 @rendermode InteractiveServer
 @attribute [Authorize]
 @implements IDisposable
@@ -10,9 +10,13 @@
 
 <PageTitle>Launchpad War Room</PageTitle>
 
-@if (release is null)
+@if (!hasLoaded)
 {
     <p>Loading launch room...</p>
+}
+else if (release is null)
+{
+    <p>No release is available.</p>
 }
 else
 {
@@ -105,6 +109,7 @@ else
     private List<AuditEvent> auditEvents = [];
     private string? message;
     private string blockReason = "";
+    private bool hasLoaded;
     private bool busy;
     private bool canRunChecks;
     private bool canManageRelease;
@@ -116,6 +121,7 @@ else
         Notifier.Changed += OnLaunchpadChanged;
         await LoadAuthorizationAsync();
         await LoadAsync();
+        hasLoaded = true;
     }
 
     private async Task LoadAsync()
@@ -201,7 +207,6 @@ else
         var result = await action();
         message = result.Message;
         busy = false;
-        await LoadAsync();
     }
 
     private async Task LoadAuthorizationAsync()

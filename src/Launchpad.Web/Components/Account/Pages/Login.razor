@@ -1,4 +1,4 @@
-﻿@page "/Account/Login"
+@page "/Account/Login"
 
 @using System.ComponentModel.DataAnnotations
 @using Microsoft.AspNetCore.Authentication
@@ -33,7 +33,7 @@
                     <label for="Input.Password" class="form-label">Password</label>
                     <ValidationMessage For="() => Input.Password" class="text-danger" />
                 </div>
-                <div class="checkbox mb-3">
+                <div class="mb-3">
                     <label class="form-label">
                         <InputCheckbox @bind-Value="Input.RememberMe" class="darker-border-checkbox form-check-input" />
                         Remember me
@@ -57,7 +57,7 @@
             </EditForm>
         </section>
     </div>
-    <div class="col-lg-4 col-lg-offset-2">
+    <div class="col-lg-4 offset-lg-2">
         <section>
             <h3>Use another service to log in.</h3>
             <hr />

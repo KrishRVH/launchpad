@@ -21,6 +21,7 @@ public static class LaunchpadSeeder
     public static async Task SeedAsync(IServiceProvider services, CancellationToken cancellationToken = default)
     {
         ApplicationDbContext db = services.GetRequiredService<ApplicationDbContext>();
+        TimeProvider timeProvider = services.GetRequiredService<TimeProvider>();
         await db.Database.MigrateAsync(cancellationToken).ConfigureAwait(false);
 
         RoleManager<IdentityRole> roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
@@ -28,7 +29,8 @@ public static class LaunchpadSeeder
         {
             if (!await roleManager.RoleExistsAsync(role).ConfigureAwait(false))
             {
-                await roleManager.CreateAsync(new IdentityRole(role)).ConfigureAwait(false);
+                IdentityResult created = await roleManager.CreateAsync(new IdentityRole(role)).ConfigureAwait(false);
+                ThrowIfFailed(created);
             }
         }
 
@@ -47,15 +49,13 @@ public static class LaunchpadSeeder
                     StudioTitle = Title,
                 };
                 IdentityResult created = await userManager.CreateAsync(user, DemoPassword).ConfigureAwait(false);
-                if (!created.Succeeded)
-                {
-                    throw new InvalidOperationException(string.Join("; ", created.Errors.Select(error => error.Description)));
-                }
+                ThrowIfFailed(created);
             }
 
             if (!await userManager.IsInRoleAsync(user, Role).ConfigureAwait(false))
             {
-                await userManager.AddToRoleAsync(user, Role).ConfigureAwait(false);
+                IdentityResult added = await userManager.AddToRoleAsync(user, Role).ConfigureAwait(false);
+                ThrowIfFailed(added);
             }
         }
 
@@ -64,12 +64,14 @@ public static class LaunchpadSeeder
             return;
         }
 
+        DateTimeOffset now = timeProvider.GetUtcNow();
         GameProject project = new()
         {
             Id = Guid.NewGuid(),
             Name = "Starfall Tactics",
             CodeName = "starfall-tactics",
             Summary = "A tactics RPG about rival sky crews racing through a collapsing constellation.",
+            CreatedAt = now,
         };
 
         GameRelease release = new()
@@ -78,8 +80,9 @@ public static class LaunchpadSeeder
             Project = project,
             Version = "v1.0 Launch Candidate",
             Codename = "Comet Crown",
-            TargetDate = DateOnly.FromDateTime(DateTime.UtcNow.AddDays(14)),
+            TargetDate = DateOnly.FromDateTime(now.UtcDateTime.AddDays(14)),
             Summary = "The release candidate for the first public launch.",
+            CreatedAt = now,
         };
 
         release.Gates.AddRange([
@@ -114,6 +117,8 @@ public static class LaunchpadSeeder
                 Description = "QA can finish the flow, but keyboard/controller focus is inconsistent.",
                 Severity = BugSeverity.High,
                 Status = BugStatus.Triaged,
+                CreatedAt = now,
+                UpdatedAt = now,
             },
             new BugReport
             {
@@ -122,6 +127,8 @@ public static class LaunchpadSeeder
                 Description = "Subtitle appears two seconds early in French locale.",
                 Severity = BugSeverity.Medium,
                 Status = BugStatus.InProgress,
+                CreatedAt = now,
+                UpdatedAt = now,
             },
             new BugReport
             {
@@ -129,7 +136,9 @@ public static class LaunchpadSeeder
                 Title = "Save file migration needs rollback note",
                 Description = "The migration works, but support needs the rollback note linked from the release.",
                 Severity = BugSeverity.Low,
-                Status = BugStatus.New
+                Status = BugStatus.New,
+                CreatedAt = now,
+                UpdatedAt = now,
             },
         ]);
 
@@ -142,6 +151,7 @@ public static class LaunchpadSeeder
                 Sentiment = FeedbackSentiment.Positive,
                 Body = "The new tactical preview makes risky moves much easier to understand.",
                 Source = "Seed",
+                CreatedAt = now,
             },
             new PlaytestFeedback
             {
@@ -150,7 +160,8 @@ public static class LaunchpadSeeder
                 TesterAlias = "OrbitAce",
                 Sentiment = FeedbackSentiment.Mixed,
                 Body = "Combat is great, but the controller menu still feels fragile.",
-                Source = "Seed"
+                Source = "Seed",
+                CreatedAt = now,
             },
         ]);
 
@@ -159,6 +170,7 @@ public static class LaunchpadSeeder
         {
             Title = "Launchpad seeded",
             Body = "Open the War Room, start release checks, and ship Starfall Tactics.",
+            CreatedAt = now,
         });
         db.AuditEvents.Add(new AuditEvent
         {
@@ -166,8 +178,17 @@ public static class LaunchpadSeeder
             EntityType = nameof(GameProject),
             EntityId = project.Id.ToString(),
             Detail = "Seeded Starfall Tactics release command center.",
+            CreatedAt = now,
         });
 
         await db.SaveChangesAsync(cancellationToken).ConfigureAwait(false);
+    }
+
+    private static void ThrowIfFailed(IdentityResult result)
+    {
+        if (!result.Succeeded)
+        {
+            throw new InvalidOperationException(string.Join("; ", result.Errors.Select(error => error.Description)));
+        }
     }
 }

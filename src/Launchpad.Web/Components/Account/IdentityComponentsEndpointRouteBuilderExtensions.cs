@@ -4,7 +4,6 @@ using Launchpad.Web.Components.Account.Pages;
 using Launchpad.Web.Components.Account.Pages.Manage;
 using Launchpad.Web.Data;
 using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Http.Extensions;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
@@ -73,8 +72,7 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
 
         manageGroup.MapPost("/DownloadPersonalData", async (
             HttpContext context,
-            [FromServices] UserManager<ApplicationUser> userManager,
-            [FromServices] AuthenticationStateProvider authenticationStateProvider) =>
+            [FromServices] UserManager<ApplicationUser> userManager) =>
         {
             var user = await userManager.GetUserAsync(context.User).ConfigureAwait(false);
             if (user is null)
@@ -89,15 +87,15 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             var personalData = new Dictionary<string, string>(StringComparer.Ordinal);
             var personalDataProps = typeof(ApplicationUser).GetProperties().Where(
                 prop => Attribute.IsDefined(prop, typeof(PersonalDataAttribute)));
-            foreach (var p in personalDataProps)
+            foreach (var property in personalDataProps)
             {
-                personalData.Add(p.Name, p.GetValue(user)?.ToString() ?? "null");
+                personalData.Add(property.Name, property.GetValue(user)?.ToString() ?? "null");
             }
 
             var logins = await userManager.GetLoginsAsync(user).ConfigureAwait(false);
-            foreach (var l in logins)
+            foreach (var login in logins)
             {
-                personalData.Add($"{l.LoginProvider} external login provider key", l.ProviderKey);
+                personalData.Add($"{login.LoginProvider} external login provider key", login.ProviderKey);
             }
 
             personalData.Add("Authenticator Key", (await userManager.GetAuthenticatorKeyAsync(user).ConfigureAwait(false))!);

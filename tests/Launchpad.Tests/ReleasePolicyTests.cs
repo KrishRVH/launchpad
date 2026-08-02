@@ -77,14 +77,16 @@ public sealed class ReleasePolicyTests
     }
 
     [TestMethod]
-    public void RunningGateKeepsReleaseChecking()
+    [DataRow(GateStatus.Pending, ReleaseStatus.Draft)]
+    [DataRow(GateStatus.Queued, ReleaseStatus.Checking)]
+    [DataRow(GateStatus.Running, ReleaseStatus.Checking)]
+    public void IncompleteRequiredGateDeterminesReleaseStatus(GateStatus gateStatus, ReleaseStatus expectedStatus)
     {
         ReleaseStatus status = ReleasePolicy.StatusForGates([
-            new ReleaseGate { Name = "Build", Status = GateStatus.Running },
-            new ReleaseGate { Name = "QA", Status = GateStatus.Pending },
+            new ReleaseGate { Name = "Build", Status = gateStatus },
         ]);
 
-        Assert.AreEqual(ReleaseStatus.Checking, status);
+        Assert.AreEqual(expectedStatus, status);
     }
 
     [TestMethod]

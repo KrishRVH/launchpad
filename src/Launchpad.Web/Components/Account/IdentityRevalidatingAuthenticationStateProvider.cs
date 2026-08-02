@@ -7,8 +7,7 @@ using Microsoft.Extensions.Options;
 
 namespace Launchpad.Web.Components.Account;
 
-// This is a server-side AuthenticationStateProvider that revalidates the security stamp for the connected user
-// every 30 minutes an interactive circuit is connected.
+// Revalidate the security stamp every 30 minutes while an interactive circuit is connected.
 internal sealed class IdentityRevalidatingAuthenticationStateProvider(
         ILoggerFactory loggerFactory,
         IServiceScopeFactory scopeFactory,
@@ -36,15 +35,14 @@ internal sealed class IdentityRevalidatingAuthenticationStateProvider(
         {
             return false;
         }
-        else if (!userManager.SupportsUserSecurityStamp)
+
+        if (!userManager.SupportsUserSecurityStamp)
         {
             return true;
         }
-        else
-        {
-            var principalStamp = principal.FindFirstValue(options.Value.ClaimsIdentity.SecurityStampClaimType);
-            var userStamp = await userManager.GetSecurityStampAsync(user).ConfigureAwait(false);
-            return string.Equals(principalStamp, userStamp, StringComparison.Ordinal);
-        }
+
+        var principalStamp = principal.FindFirstValue(options.Value.ClaimsIdentity.SecurityStampClaimType);
+        var userStamp = await userManager.GetSecurityStampAsync(user).ConfigureAwait(false);
+        return string.Equals(principalStamp, userStamp, StringComparison.Ordinal);
     }
 }

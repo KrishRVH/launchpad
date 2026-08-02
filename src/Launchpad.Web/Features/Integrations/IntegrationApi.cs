@@ -33,6 +33,7 @@ public static class IntegrationApi
             }
 
             FeedbackSentiment sentiment = Enum.TryParse(request.Sentiment, ignoreCase: true, out FeedbackSentiment parsed)
+                && Enum.IsDefined(parsed)
                 ? parsed
                 : FeedbackSentiment.Mixed;
 
